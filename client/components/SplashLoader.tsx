@@ -1,198 +1,167 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Dimensions, Easing, StatusBar, Text, View, Image } from "react-native";
+import {
+    Animated, Easing, Image, StyleSheet, Text, View,
+} from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 
-const { width, height } = Dimensions.get("window");
+interface Props {
+    message?: string;
+}
 
-export default function SplashLoader({ message = "Loading..." }: { message?: string }) {
+export default function SplashLoader({ message = "Loading..." }: Props) {
     const { colors, isDark } = useTheme();
-
-    // Rotation animation for the spinner ring
-    const spinAnim = useRef(new Animated.Value(0)).current;
-    // Fade + scale in for the logo
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const scaleAnim = useRef(new Animated.Value(0.8)).current;
-    // Pulse for the dot indicator
-    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const spin = useRef(new Animated.Value(0)).current;
+    const fade = useRef(new Animated.Value(0)).current;
+    const [imageError, setImageError] = React.useState(false);
 
     useEffect(() => {
-        // Logo entrance
-        Animated.parallel([
-            Animated.timing(fadeAnim, {
-                toValue: 1, duration: 400,
-                easing: Easing.out(Easing.ease),
-                useNativeDriver: true,
-            }),
-            Animated.spring(scaleAnim, {
-                toValue: 1, tension: 60, friction: 8,
-                useNativeDriver: true,
-            }),
-        ]).start();
-
-        // Continuous spinner rotation
+        // Spin the ring
         Animated.loop(
-            Animated.timing(spinAnim, {
-                toValue: 1, duration: 1200,
+            Animated.timing(spin, {
+                toValue: 1,
+                duration: 1200,
                 easing: Easing.linear,
                 useNativeDriver: true,
             })
         ).start();
 
-        // Pulse animation on the dots
-        Animated.loop(
-            Animated.sequence([
-                Animated.timing(pulseAnim, {
-                    toValue: 0.4, duration: 600,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-                Animated.timing(pulseAnim, {
-                    toValue: 1, duration: 600,
-                    easing: Easing.inOut(Easing.ease),
-                    useNativeDriver: true,
-                }),
-            ])
-        ).start();
+        // Fade in
+        Animated.timing(fade, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+        }).start();
     }, []);
 
-    const spin = spinAnim.interpolate({
+    const rotate = spin.interpolate({
         inputRange: [0, 1],
         outputRange: ["0deg", "360deg"],
     });
 
     return (
-        <View style={{
-            flex: 1,
-            width, height,
-            backgroundColor: colors.background,
-            justifyContent: "center",
-            alignItems: "center",
-        }}>
-            <StatusBar
-                barStyle={isDark ? "light-content" : "dark-content"}
-                backgroundColor={colors.background}
-            />
+        <Animated.View style={[styles.container, { backgroundColor: colors.background, opacity: fade }]}>
 
-            <Animated.View style={{
-                opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }],
-                alignItems: "center",
-            }}>
-                {/* Outer spinner ring */}
-                <View style={{ width: 110, height: 110, justifyContent: "center", alignItems: "center" }}>
-                    <Animated.View style={{
-                        position: "absolute",
-                        width: 110, height: 110,
-                        borderRadius: 55,
-                        borderWidth: 3,
-                        borderColor: "transparent",
-                        borderTopColor: colors.accent,
-                        borderRightColor: colors.accent + "55",
-                        transform: [{ rotate: spin }],
-                    }} />
+            {/* Spinning ring */}
+            <View style={styles.ringWrapper}>
+                <Animated.View style={[styles.ring, { borderTopColor: colors.accent, transform: [{ rotate }] }]} />
 
-                    {/* Inner static ring */}
-                    <View style={{
-                        position: "absolute",
-                        width: 90, height: 90,
-                        borderRadius: 45,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                    }} />
-
-                    {/* Logo circle */}
-                    {/* Logo circle — use actual app icon */}
-<View style={{
-    width: 74, height: 74,
-    borderRadius: 37,
-    overflow: "hidden",
-    backgroundColor: colors.accent,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
-}}>
-    <Image
-        source={require("../assets/images/icon.png")}
-        style={{ width: 74, height: 74, borderRadius: 37 }}
-        resizeMode="cover"
-    />
-</View>
+                {/* Logo inside ring */}
+                <View style={styles.logoCircle}>
+                    {!imageError ? (
+                        <Image
+                            source={require("../assets/images/icon.png")}
+                            style={styles.logoImage}
+                            resizeMode="contain"
+                            onError={() => setImageError(true)}
+                        />
+                    ) : (
+                        /* Fallback when image fails to load */
+                        <View style={[styles.logoFallback, { backgroundColor: colors.accent }]}>
+                            <Text style={styles.logoFallbackText}>A2S</Text>
+                        </View>
+                    )}
                 </View>
+            </View>
 
-                {/* Brand name */}
-                <View style={{ marginTop: 24, alignItems: "center" }}>
-                    <Text style={{
-                        fontSize: 26, fontWeight: "800",
-                        color: colors.textPrimary,
-                        letterSpacing: 1,
-                    }}>
-                        A2S Cinemas
-                    </Text>
-                    <View style={{
-                        width: 40, height: 3, borderRadius: 2,
-                        backgroundColor: colors.accent,
-                        marginTop: 8,
-                    }} />
-                </View>
+            {/* App name */}
+            <Text style={[styles.appName, { color: colors.textPrimary }]}>
+                A2S Cinemas
+            </Text>
 
-                {/* Loading dots */}
-                <View style={{ flexDirection: "row", gap: 6, marginTop: 40 }}>
-                    {[0, 1, 2].map((i) => (
-                        <AnimatedDot key={i} delay={i * 180} colors={colors} />
-                    ))}
-                </View>
+            {/* Loading message with animated dots */}
+            <DotsLoader message={message} color={colors.textMuted} />
 
-                {/* Message */}
-                <Text style={{
-                    color: colors.textMuted, fontSize: 13,
-                    marginTop: 14, fontWeight: "500",
-                    letterSpacing: 0.3,
-                }}>
-                    {message}
-                </Text>
-            </Animated.View>
+        </Animated.View>
+    );
+}
+
+function DotsLoader({ message, color }: { message: string; color: string }) {
+    const dot1 = useRef(new Animated.Value(0.3)).current;
+    const dot2 = useRef(new Animated.Value(0.3)).current;
+    const dot3 = useRef(new Animated.Value(0.3)).current;
+
+    useEffect(() => {
+        const animate = (dot: Animated.Value, delay: number) =>
+            Animated.loop(
+                Animated.sequence([
+                    Animated.delay(delay),
+                    Animated.timing(dot, { toValue: 1, duration: 300, useNativeDriver: true }),
+                    Animated.timing(dot, { toValue: 0.3, duration: 300, useNativeDriver: true }),
+                    Animated.delay(600),
+                ])
+            ).start();
+
+        animate(dot1, 0);
+        animate(dot2, 200);
+        animate(dot3, 400);
+    }, []);
+
+    return (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}>
+            <Text style={{ fontSize: 13, color, fontWeight: "500" }}>{message}</Text>
+            {[dot1, dot2, dot3].map((dot, i) => (
+                <Animated.View
+                    key={i}
+                    style={{
+                        width: 4, height: 4, borderRadius: 2,
+                        backgroundColor: color, opacity: dot,
+                    }}
+                />
+            ))}
         </View>
     );
 }
 
-// Staggered dot animation
-function AnimatedDot({ delay, colors }: { delay: number; colors: any }) {
-    const anim = useRef(new Animated.Value(0.3)).current;
-
-    useEffect(() => {
-        setTimeout(() => {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(anim, {
-                        toValue: 1, duration: 400,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(anim, {
-                        toValue: 0.3, duration: 400,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
-                ])
-            ).start();
-        }, delay);
-    }, []);
-
-    return (
-        <Animated.View style={{
-            width: 8, height: 8, borderRadius: 4,
-            backgroundColor: colors.accent,
-            opacity: anim,
-            transform: [{
-                scale: anim.interpolate({
-                    inputRange: [0.3, 1],
-                    outputRange: [0.7, 1],
-                }),
-            }],
-        }} />
-    );
-}
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 20,
+    },
+    ringWrapper: {
+        width: 110,
+        height: 110,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    ring: {
+        position: "absolute",
+        width: 110,
+        height: 110,
+        borderRadius: 55,
+        borderWidth: 3,
+        borderColor: "transparent",
+    },
+    logoCircle: {
+        width: 82,
+        height: 82,
+        borderRadius: 41,
+        overflow: "hidden",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#0A0A0F",
+    },
+    logoImage: {
+        width: 82,
+        height: 82,
+    },
+    logoFallback: {
+        width: 82,
+        height: 82,
+        borderRadius: 41,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    logoFallbackText: {
+        color: "#fff",
+        fontSize: 22,
+        fontWeight: "900",
+        letterSpacing: 1,
+    },
+    appName: {
+        fontSize: 22,
+        fontWeight: "800",
+        letterSpacing: 0.5,
+    },
+});
