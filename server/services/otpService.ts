@@ -53,6 +53,9 @@ export const sendEmailOTP = async (
                 user: process.env.BREVO_SMTP_LOGIN!,
                 pass: process.env.BREVO_SMTP_KEY!,
             },
+            connectionTimeout: 10_000,
+            greetingTimeout: 10_000,
+            socketTimeout: 15_000,
         });
 
         const displayName = name || "there";
@@ -180,7 +183,13 @@ export const sendEmailOTP = async (
         console.log(`[OTP-EMAIL] Sent to ${email}`);
         return true;
     } catch (err: any) {
-        console.error("[OTP-EMAIL] Send failed:", err.message);
+        console.error("[OTP-EMAIL] Send failed:", {
+            message: err.message,
+            code: err.code,
+            responseCode: err.responseCode,
+            response: err.response,
+            command: err.command,
+        });
         return false;
     }
 };

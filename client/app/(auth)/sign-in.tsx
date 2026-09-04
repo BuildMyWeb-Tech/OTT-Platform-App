@@ -38,7 +38,7 @@ export default function SignIn() {
                 identifier: email.trim().toLowerCase(),
                 type: "email",
                 purpose: "login",
-            });
+            }, { timeout: 15_000 });
             if (data.success) {
                 Toast.show({ type: "success", text1: "OTP sent!", text2: data.message });
                 router.push({
@@ -53,7 +53,14 @@ export default function SignIn() {
                 Toast.show({ type: "error", text1: "Failed", text2: data.message });
             }
         } catch (e: any) {
-            Toast.show({ type: "error", text1: "Error", text2: e.response?.data?.message || "Failed to send OTP" });
+            const isTimeout = e.code === "ECONNABORTED";
+            Toast.show({
+                type: "error",
+                text1: isTimeout ? "Taking too long" : "Error",
+                text2: isTimeout
+                    ? "OTP is taking too long to send. Please try again."
+                    : e.response?.data?.message || "Unable to send OTP right now. Please try again in a moment.",
+            });
         } finally {
             setSendingOtp(false);
         }

@@ -17,8 +17,15 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "a2scinemas" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "a2scinemas"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
@@ -35,17 +42,26 @@
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
-   
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0A0F"
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
     "extra": {
-      "router": {},
       "eas": {
-        "projectId": "ce4fc097-be0b-4c11-b7d0-5853c667cb2c"
+        "projectId": "ba0696b9-47d3-4360-bb8d-239fb9252953"
       }
     },
-    "owner": "ott-platform"
+    "owner": "a2s-cinemass-team"
   }
 }

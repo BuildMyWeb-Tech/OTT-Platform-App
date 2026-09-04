@@ -69,7 +69,7 @@ export const sendOTP = async (req: Request, res: Response) => {
             : await sendEmailOTP(normalizedId, otp, name);
 
         if (!sent) {
-            return res.status(500).json({ success: false, message: "Failed to send OTP. Please check server config." });
+            return res.status(500).json({ success: false, message: "Unable to send OTP right now. Please try again in a moment." });
         }
 
         const maskedId = type === "email"
