@@ -18,12 +18,18 @@
       "autoIncrement": true,
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ott-platform-a2s-cinemas.onrender.com/api"
       }
     },
     "playstore": {
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://ott-platform-a2s-cinemas.onrender.com/api"
       }
     }
   },

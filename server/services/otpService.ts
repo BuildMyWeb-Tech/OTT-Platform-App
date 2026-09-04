@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 
 export const generateOTP = (): string =>
     Math.floor(100000 + Math.random() * 900000).toString();
@@ -45,19 +44,6 @@ export const sendEmailOTP = async (
         return true;
     }
     try {
-        const transporter = nodemailer.createTransport({
-            host: "smtp-relay.brevo.com",
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.BREVO_SMTP_LOGIN!,
-                pass: process.env.BREVO_SMTP_KEY!,
-            },
-            connectionTimeout: 10_000,
-            greetingTimeout: 10_000,
-            socketTimeout: 15_000,
-        });
-
         const displayName = name || "there";
         const fromName = process.env.OTP_FROM_NAME || "A2S Cinemas";
         const fromEmail = process.env.OTP_FROM_EMAIL || "noreply@a2scinemas.com";
@@ -65,11 +51,7 @@ export const sendEmailOTP = async (
         // Split OTP into individual digits for display
         const digits = otp.split("").join(" &nbsp; ");
 
-        await transporter.sendMail({
-            from: `"${fromName}" <${fromEmail}>`,
-            to: email,
-            subject: `Your A2S Cinemas verification code: ${otp}`,
-            html: `
+        const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -177,18 +159,45 @@ export const sendEmailOTP = async (
 
 </body>
 </html>
-            `,
-        });
+            `;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+        let res: Response;
+        try {
+            res = await fetch("https://api.brevo.com/v3/smtp/email", {
+                method: "POST",
+                headers: {
+                    "api-key": process.env.BREVO_API_KEY!,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({
+                    sender: { name: fromName, email: fromEmail },
+                    to: [{ email }],
+                    subject: `Your A2S Cinemas verification code: ${otp}`,
+                    htmlContent,
+                }),
+                signal: controller.signal,
+            });
+        } finally {
+            clearTimeout(timeoutId);
+        }
+
+        if (!res.ok) {
+            const body = await res.text();
+            console.error("[OTP-EMAIL] Brevo API rejected send:", { status: res.status, body });
+            return false;
+        }
 
         console.log(`[OTP-EMAIL] Sent to ${email}`);
         return true;
     } catch (err: any) {
         console.error("[OTP-EMAIL] Send failed:", {
             message: err.message,
+            name: err.name,
             code: err.code,
-            responseCode: err.responseCode,
-            response: err.response,
-            command: err.command,
         });
         return false;
     }
