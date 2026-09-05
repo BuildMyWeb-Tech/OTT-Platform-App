@@ -30,6 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# local asset backups
+*.bak
+
 # local env files
 .env
 .env*.local
