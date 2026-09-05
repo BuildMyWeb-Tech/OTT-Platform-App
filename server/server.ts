@@ -25,8 +25,10 @@ app.use(cors({
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:8081",
+        "http://localhost:8082",
         "https://ott-platform-a2-s-cinemas.vercel.app",
         "https://ott-platform-a2s-cinemas.vercel.app",
+        "https://admin.a2scinemas.com"
     ],
     credentials: true,
 }));
